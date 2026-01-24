@@ -1,19 +1,20 @@
-const users = require('../dao/userDb')
-
+const userDao = require('../dao/userDao');
+const bcrypt = require('bcryptjs');
+const user = require('../model/user');
 
 const authController = {
-  login: (request, response) => {
+  login: async (request, response) => {
     const {email, password} = request.body;
-    if (!email && !password){
+    if (!email || !password){
       return response.status(400).json({
-        message: "Please enter both email and passwor",
+        message: "Please enter both email and password",
       });
     }
 
-    const hasAccount = users.find( 
-      user => user.password === password && user.email === email
-    );
-    if (hasAccount){
+    const user = await userDao.findByEmail(email); 
+    const isPasswordMatched = await bcrypt.compare(password, user.password);
+
+    if (user && isPasswordMatched){
       return response.status(200).json({
         message: "Successfully logged in!",
       });
@@ -25,7 +26,8 @@ const authController = {
 
   },
 
-  register: (request, response) => {
+  register: async (request, response) => {
+  
     const {name, email, password } = request.body;
   
     // Return status 400 (client error) if a field it missing
@@ -35,30 +37,34 @@ const authController = {
       });
     }
   
-    // Return status 401 if email already exists
-    const emailExists = users.find(user => user.email === email);
-    // find methods returns the object where it is present not true or false
-    if(emailExists){
-      return response.status(401).json({
-        message: `User already exists for the email: ${email}`
-      });
-    };
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = {
-      id: users.length + 1,
+    await userDao.create({
       name: name,
       email: email,
-      password: password
-    }
-
-    users.push(newUser);
+      password: hashedPassword
+    })
+      .then((u) => {
+        return response.status(200).json({
+          message: "Successfully registered",
+          user: {id: user.id} 
+        });
+      })
+      .catch(error => {
+        if (error.code ==  11000){
+          return response.status(400).json({
+            message: "User with the email already exists"
+          })
+        } else {
+            console.log(error);
+            return response.status(500).json({
+            message: "Internal server error"
+          });
+        }
+      });
   
-    // Return status 200 when regsitration is successfully done
-    return response.status(200).json({
-      message: "Successfully registered",
-      user: {id: newUser.id} 
-    });
-  },
+  }
 
       
 };
