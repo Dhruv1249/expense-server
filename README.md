@@ -1,4 +1,4 @@
-# Finance Server MERN class project
+# Expense Server MERN class project
 
 
 ## Initial Commit
