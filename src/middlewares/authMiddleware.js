@@ -1,4 +1,4 @@
-const jwt = require('jsonWebToken');
+const jwt = require('jsonwebtoken');
 const authMiddleware = {
   protect: async (request, response, next) =>{
     try{
@@ -30,3 +30,5 @@ const authMiddleware = {
     }
   }
 }
+
+module.exports = authMiddleware;

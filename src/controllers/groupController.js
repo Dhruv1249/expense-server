@@ -3,8 +3,10 @@ const groupDao = require('../dao/groupDao');
 const groupController = {
   create: async (request, response) => {
     try{
+      const user = request.user;
+      const adminEmail = user.email;
       const {
-        name, description, adminEmail,
+        name, description, 
         membersEmail, thumbnail,
       } = request.body;
 
