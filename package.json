@@ -22,8 +22,10 @@
   "homepage": "https://github.com/Dhruv1249/expense-server#readme",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
     "nodemon": "^3.1.11"
   }
