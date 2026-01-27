@@ -3,13 +3,11 @@ const authMiddleware = {
   protect: async (request, response, next) =>{
     try{
       const token = request.cookies?.jwtToken;
-
       if(!token){
         return response.status(401).json({
           error: "Unauthorized access"
         });
       }
-
       try{
         const user = jwt.verify(token,process.env.JWT_SECRET);
         request.user = user;
@@ -19,9 +17,6 @@ const authMiddleware = {
           error: "Unauthorized access"
         })
       }
-
-
-
     } catch(error) {
       console.log(error);
       response.status(500).json({

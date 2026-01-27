@@ -15,26 +15,26 @@ const groupDao = {
   
   addMembers: async (groupId,...membersEmails) => {
     return await Group.findByIdAndUpdate(groupId, {
-      $addToSet: { membersEmail: {$each: membersEmails} }
+      $addToSet: { membersEmail: {$each  : membersEmails} }
     }, {new : true}, );
 
   },
 
-/*  removeMembers: async (groupId,...membersEmails) {
+  removeMembers: async (groupId,...membersEmails) => {
     return await Group.findByIdAndUpdate(groupId,{
-      $removeFromSet:{membersEmail: {$each: membersEmails  }
-      }
-    });  
+      $pull :{membersEmail: {$in: membersEmails  }}
+      }, {new : true},
+    );  
   },
   
-  getGroupByEmail : async (email) {
+  getGroupByEmail : async (email) => {
     return await Group.find({membersEmail: email});
   },
 
-  getgroupByStatus : async (status){
-    return await Group.find({payamentStatus: status});
+  getgroupByStatus : async (status) =>{
+    return await Group.find({paymentStatus: status});
   },
-*/
+
 };
 
 module.exports = groupDao; 
