@@ -9,7 +9,7 @@ router.post('/create',groupController.create);
 router.post('/update', groupController.update);
 router.post('/addMembers',groupController.addMembers);
 router.post('/removeMembers',groupController.removeMembers);
-router.post('/getGroupMembers', groupController.getGroupMembers);
+router.post('/getGroupByEmail', groupController.getGroupByEmail);
 router.post('/getGroupByStatus',groupController.getGroupByStatus);
 
 

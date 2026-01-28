@@ -13,14 +13,14 @@ const groupDao = {
     }, {new: true},);
   },
   
-  addMembers: async (groupId,...membersEmails) => {
+  addMembers: async (groupId,membersEmails) => {
     return await Group.findByIdAndUpdate(groupId, {
       $addToSet: { membersEmail: {$each  : membersEmails} }
     }, {new : true}, );
 
   },
 
-  removeMembers: async (groupId,...membersEmails) => {
+  removeMembers: async (groupId,membersEmails) => {
     return await Group.findByIdAndUpdate(groupId,{
       $pull :{membersEmail: {$in: membersEmails  }}
       }, {new : true},

@@ -27,7 +27,7 @@ const authController = {
       response.cookie('jwtToken',token, {
         httpOnly: true,
         secure: true,
-        domain: "loacalhost",
+        domain: "localhost",
         path: '/'
       });
 

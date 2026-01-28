@@ -52,9 +52,17 @@ const groupController = {
       if (membersEmail && Array.isArray(membersEmail)) {
         allMembers = [...new Set([...allMembers, ...membersEmail])];
       }
-      
+      const group = await Group.findOne({adminEmail: adminEmail});
+      const groupId = group._id;
+      if(!groupId){
+        response.status(500).json({
+          message: 'No group with this adminEmail exists',
+        });
+
+      } 
+
       const newGroup = await groupDao.updateGroup({
-        name, description, adminEmail, allMembers, thumbnail,
+       groupId, name, description, adminEmail, allMembers, thumbnail,
         paymentStatus: {
           amount: 0,
           currency: 'INR',
@@ -64,7 +72,7 @@ const groupController = {
       });
 
       response.status(200).json({
-        message: 'Group created',
+        message: 'Group updated',
         groupId: newGroup._id
       });
 
@@ -83,10 +91,10 @@ const groupController = {
     try{  
       const user = request.user;
       const adminEmail = user.email;
-      const group = Group.findOne({adminEmail: email});
+      const group = await Group.findOne({adminEmail: adminEmail});
       const groupId = group._id;
       const {emails} = request.body
-      const updatedGroup = groupDao.addMembers(groupId,emails);
+      const updatedGroup = await groupDao.addMembers(groupId,emails);
       
       response.status(200).json({
         message: 'Members added to the group',
@@ -104,13 +112,13 @@ const groupController = {
     try{  
       const user = request.user;
       const adminEmail = user.email;
-      const group = Group.findOne({adminEmail: email});
+      const group = await Group.findOne({adminEmail:adminEmail});
       const groupId = group._id;
       const {emails} = request.body
-      const updatedGroup = groupDao.addMembers(groupId,emails);
+      const updatedGroup = await groupDao.addMembers(groupId,emails);
       
       response.status(200).json({
-        message: 'Members removedt from the group',
+        message: 'Members removed from the group',
         groupId: updatedGroup._id
       });
     } catch(error) {
@@ -124,10 +132,10 @@ const groupController = {
   getGroupByEmail: async (request, response) => {
      try{  
       const {email} = request.body;
-      const group = groupDao.getGroupByEmail(email);
+      const group = await groupDao.getGroupByEmail(email);
       
       response.status(200).json({
-        message: 'Members removedt from the group',
+        message: ' Group found!',
         group: group
       });
     } catch(error) {
@@ -142,7 +150,7 @@ const groupController = {
   getGroupByStatus: async (request, response) => {
      try{  
       const status = request.body;
-      const group = groupDao.getGroupByStatus(status);
+      const group = await groupDao.getGroupByStatus(status);
       
       response.status(200).json({
         message: 'Members removedt from the group',
@@ -158,4 +166,4 @@ const groupController = {
 
 };
 
-module.exports = groupController
+module.exports = groupController;
