@@ -1,8 +1,10 @@
 const express = require("express");
+
 const router = express.Router();
 const authController = require("../controllers/authController");
+const { loginValidator } = require("../validators/authValidator");
 
-router.post("/login", authController.login);
+router.post("/login", loginValidator, authController.login);
 router.post("/register", authController.register);
 router.post("/is-user-logged-in", authController.isUserLoggedIn);
 router.post("/logout", authController.logout);

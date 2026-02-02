@@ -2,9 +2,15 @@ const userDao = require("../dao/userDao");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
+const { validationResult } = require("express-validator");
+
 const authController = {
   login: async (request, response) => {
     try {
+      const errors = validationResult(request);
+      if (!errors.isEmpty()) {
+        return response.status(400).json({ errors: errors.array() });
+      }
       const { email, password } = request.body;
       if (!email || !password) {
         return response.status(400).json({
