@@ -1,169 +1,100 @@
-const groupDao = require('../dao/groupDao');
-const Group = require("../model/group");
+const groupDao = require("../dao/groupDao");
 
 const groupController = {
   create: async (request, response) => {
-    try{
+    try {
       const user = request.user;
-      const adminEmail = user.email;
-      const {
-        name, description, 
-        membersEmail, thumbnail,
-      } = request.body;
+      const { name, description, membersEmail, thumbnail } = request.body;
 
-      let allMembers = [adminEmail];
+      let allMembers = [user.email];
       if (membersEmail && Array.isArray(membersEmail)) {
         allMembers = [...new Set([...allMembers, ...membersEmail])];
       }
-      
+
       const newGroup = await groupDao.createGroup({
-        name, description, adminEmail, allMembers, thumbnail,
+        name,
+        description,
+        adminEmail: user.email,
+        membersEmail: allMembers,
+        thumbnail,
         paymentStatus: {
           amount: 0,
-          currency: 'INR',
-          date: Date.now(),
-          isPaid: false
-        }
+          currency: "INR",
+        },
       });
 
-      response.status(200).json({
-        message: 'Group created',
-        groupId: newGroup._id
+      response.status(201).json({
+        message: "Group created successfully",
+        groupId: newGroup._id,
       });
-      
     } catch (error) {
-      console.log(error);
-      response.status(500).json({
-        message: "Interenal server error"
-      });
-    } 
+      console.error(error);
+      response.status(500).json({ message: "Internal server error" });
+    }
   },
 
   update: async (request, response) => {
-    try{ 
-      const user = request.user;
-      const adminEmail = user.email;
-      const {
-        name, description, 
-        membersEmail, thumbnail,
-      } = request.body;
-
-      let allMembers = [adminEmail];
-      if (membersEmail && Array.isArray(membersEmail)) {
-        allMembers = [...new Set([...allMembers, ...membersEmail])];
+    try {
+      const updatedGroup = await groupDao.updateGroup(request.body);
+      if (!updatedGroup) {
+        return response.status(404).json({ message: "Group not found" });
       }
-      const group = await Group.findOne({adminEmail: adminEmail});
-      const groupId = group._id;
-      if(!groupId){
-        response.status(500).json({
-          message: 'No group with this adminEmail exists',
-        });
-
-      } 
-
-      const newGroup = await groupDao.updateGroup({
-       groupId, name, description, adminEmail, allMembers, thumbnail,
-        paymentStatus: {
-          amount: 0,
-          currency: 'INR',
-          date: Date.now(),
-          isPaid: false
-        }
-      });
-
-      response.status(200).json({
-        message: 'Group updated',
-        groupId: newGroup._id
-      });
-
-
-      
-    } catch(error) {
-      console.log(error);
-      response.status(500).json({
-        message: "Internal server error"
-      });
+      response.status(200).json(updatedGroup);
+    } catch (error) {
+      response.status(500).json({ message: "Error updating group" });
     }
-    
   },
 
   addMembers: async (request, response) => {
-    try{  
-      const user = request.user;
-      const adminEmail = user.email;
-      const group = await Group.findOne({adminEmail: adminEmail});
-      const groupId = group._id;
-      const {emails} = request.body
-      const updatedGroup = await groupDao.addMembers(groupId,emails);
-      
-      response.status(200).json({
-        message: 'Members added to the group',
-        groupId: updatedGroup._id
-      });
-    } catch(error) {
-      console.log(error);
-      response.status(500).json({
-        message: "Internal server error"
-      });
+    try {
+      const { groupId, emails } = request.body;
+      const updatedGroup = await groupDao.addMembers(groupId, ...emails);
+      response.status(200).json(updatedGroup);
+    } catch (error) {
+      response.status(500).json({ message: "Error adding members" });
     }
   },
 
   removeMembers: async (request, response) => {
-    try{  
-      const user = request.user;
-      const adminEmail = user.email;
-      const group = await Group.findOne({adminEmail:adminEmail});
-      const groupId = group._id;
-      const {emails} = request.body
-      const updatedGroup = await groupDao.addMembers(groupId,emails);
-      
-      response.status(200).json({
-        message: 'Members removed from the group',
-        groupId: updatedGroup._id
-      });
-    } catch(error) {
-      console.log(error);
-      response.status(500).json({
-        message: "Internal server error"
-      });
+    try {
+      const { groupId, emails } = request.body;
+      const updatedGroup = await groupDao.removeMembers(groupId, ...emails);
+      response.status(200).json(updatedGroup);
+    } catch (error) {
+      response.status(500).json({ message: "Error removing members" });
     }
   },
 
-  getGroupByEmail: async (request, response) => {
-     try{  
-      const {email} = request.body;
-      const group = await groupDao.getGroupByEmail(email);
-      
-      response.status(200).json({
-        message: ' Group found!',
-        group: group
-      });
-    } catch(error) {
-      console.log(error);
-      response.status(500).json({
-        message: "Internal server error"
-      });
-    }
-
-  },
-
-  getGroupByStatus: async (request, response) => {
-     try{  
-      const status = request.body;
-      const group = await groupDao.getGroupByStatus(status);
-      
-      response.status(200).json({
-        message: 'Members removedt from the group',
-        group: group
-      });
-    } catch(error) {
-      console.log(error);
-      response.status(500).json({
-        message: "Internal server error"
-      });
+  getGroupsByUser: async (request, response) => {
+    try {
+      const email = request.user.email;
+      const groups = await groupDao.getGroupByEmail(email);
+      response.status(200).json(groups);
+    } catch (error) {
+      response.status(500).json({ message: "Error fetching groups" });
     }
   },
 
+  getGroupsByPaymentStatus: async (request, response) => {
+    try {
+      const { isPaid } = request.query;
+      const status = isPaid === "true";
+      const groups = await groupDao.getGroupByStatus(status);
+      response.status(200).json(groups);
+    } catch (error) {
+      response.status(500).json({ message: "Error filtering groups" });
+    }
+  },
+
+  getAudit: async (request, response) => {
+    try {
+      const { groupId } = request.params;
+      const lastSettled = await groupDao.getAuditLog(groupId);
+      response.status(200).json({ lastSettled });
+    } catch (error) {
+      response.status(500).json({ message: "Error fetching audit log" });
+    }
+  },
 };
 
 module.exports = groupController;
