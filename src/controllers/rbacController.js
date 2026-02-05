@@ -1,11 +1,31 @@
 const rbacDao = require('../dao/rbacDao');
+const bcrypt = require('bcryptjs');
+const generateTemporaryPassword = require('../utility/passwordUtil');
+const emailService = require('../services/emailService');
+
 
 const rbacController = {
     create: async (request, response) => {
       try {
         const adminId = request.user.id;
         const { name, email, role } = request.body;
-        const user = await rbacDao.create(email, name, role, adminId);
+        const tempPassword = generateTemporaryPassword(8);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(tempPassword,salt);
+
+        
+
+        const user = await rbacDao.create(email, name, role, adminId, hashedPassword);
+        
+        try {
+          await emailService.send(
+            email, 'Temporary Password', `Your temporary password is ${tempPassword}`
+          );
+        }
+        catch (error) {
+          console.log(error);
+        }
+
         return response.status(200).json({
           message: 'User created',
           user: user
