@@ -7,7 +7,7 @@ const emailService = require('../services/emailService');
 const rbacController = {
     create: async (request, response) => {
       try {
-        const adminId = request.user.id;
+        const adminId = request.user._id;
         const { name, email, role } = request.body;
         const tempPassword = generateTemporaryPassword(8);
         const salt = await bcrypt.genSalt(10);
