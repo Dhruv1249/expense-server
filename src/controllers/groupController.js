@@ -69,8 +69,9 @@ const groupController = {
       const requester = group.members.find(
         (m) => m.user._id.toString() === requesterId,
       );
+    const isAuthorized = requester && (requester.role === 'admin' || requester.role === 'manager');
 
-      if (!requester || requester.role === 'admin' || requester.role === 'manager') {
+    if (!isAuthorized) {
         return response
           .status(403)
           .json({ message: "Only group admins can add members" });
@@ -116,8 +117,9 @@ const groupController = {
       const requester = group.members.find(
         (m) => m.user._id.toString() === requesterId,
       );
+      const isAuthorized = requester && (requester.role === 'admin' || requester.role === 'manager');
 
-      if (!requester || requester.role === 'admin' || requester.role === 'manager') {
+      if (!isAuthorized) {
         return response
           .status(403)
           .json({ message: "Access denied. Admins only." });

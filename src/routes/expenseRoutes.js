@@ -8,5 +8,5 @@ router.use(authMiddleware.protect);
 
 router.post('/add', expenseController.addExpense);
 router.get('/group/:groupId', expenseController.getGroupExpenses);
-
+router.post('/settle', expenseController.settleExpense);
 module.exports = router;

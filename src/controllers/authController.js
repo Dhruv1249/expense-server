@@ -43,8 +43,8 @@ const authController = {
 
       response.cookie("jwtToken", token, {
         httpOnly: true,
-        secure: true,
-        domain: "localhost",
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.DOMAIN,
         path: "/",
       });
       return response.status(200).json({
@@ -81,8 +81,8 @@ const authController = {
         const token = generateToken(u);
         response.cookie("jwtToken", token, {
           httpOnly: true,
-          secure: true,
-          domain: "localhost",
+          secure: process.env.NODE_ENV === 'production',
+          domain: process.env.DOMAIN,
           path: "/",
         });
         return response.status(200).json({
@@ -174,8 +174,8 @@ const authController = {
 
       response.cookie("jwtToken", token, {
         httpOnly: true,
-        secure: true,
-        domain: "localhost",
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.DOMAIN,
         path: "/",
       });
       return response.status(200).json({

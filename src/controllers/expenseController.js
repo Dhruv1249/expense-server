@@ -29,7 +29,7 @@ const expenseController = {
             let finalSplits = [];
 
             if (splitType === 'EQUAL') {
-                // splitData: [{ user: "userId"}, ...]
+                //If splitData is provided, it must be an array of UserIDs.
 
                 // If array is empty we just split between every member
                 const involvedUsers = (splitData && splitData.length > 0) 
@@ -41,7 +41,7 @@ const expenseController = {
                 finalSplits = involvedUsers.map(userId => ({
                     user: userId,
                     amount: Number(share.toFixed(2)), // Round to 2 decimals
-                    status: 'PENDING'
+                    status: (userId.toString() === payerId) ? 'SETTLED' : 'PENDING'
                 }));
 
             } else if (splitType === 'PERCENTAGE') {
@@ -60,7 +60,7 @@ const expenseController = {
                     user: item.user,
                     amount: Number(((amount * item.percentage) / 100).toFixed(2)),
                     percentage: item.percentage,
-                    status: 'PENDING'
+                    status: (userId.toString() === payerId) ? 'SETTLED' : 'PENDING'
                 }));
 
             } else if (splitType === 'EXACT') {
@@ -75,7 +75,7 @@ const expenseController = {
                 finalSplits = splitData.map(item => ({
                     user: item.user,
                     amount: item.amount,
-                    status: 'PENDING'
+                    status: (userId.toString() === payerId) ? 'SETTLED' : 'PENDING'
                 }));
             }
 
@@ -105,6 +105,38 @@ const expenseController = {
             res.status(200).json(expenses);
         } catch (error) {
             res.status(500).json({ message: "Error fetching expenses" });
+        }
+    },
+
+    settleExpense: async (req, res) => {
+        try {
+            const { expenseId, debtorId } = req.body; // debtorId = The person who paid you back
+            const userId = req.user._id; 
+
+            const expense = await expenseDao.getById(expenseId); 
+            if (!expense) return res.status(404).json({ message: "Expense not found" });
+
+            // VERIFY PAYER (Only the Payer can mark it as settled)
+            if (expense.payer.toString() !== userId.toString()) {
+                return res.status(403).json({ message: "Only the person who paid this bill can settle it." });
+            }
+
+            // Update the specific split status
+            const splitIndex = expense.splits.findIndex(s => s.user.toString() === debtorId.toString());
+            
+            if (splitIndex === -1) {
+                return res.status(404).json({ message: "This user is not involved in this expense" });
+            }
+
+            // Mark as SETTLED
+            expense.splits[splitIndex].status = "SETTLED";
+            await expense.save();
+
+            res.status(200).json({ message: "Expense settled successfully", expense });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Error settling expense" });
         }
     }
 };

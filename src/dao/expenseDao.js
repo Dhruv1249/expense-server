@@ -15,7 +15,11 @@ const expenseDao = {
 
     delete: async (expenseId) => {
         return await Expense.findByIdAndDelete(expenseId);
-    }
+    },
+
+    getById: async (id) => {
+        return await Expense.findById(id);
+    },
 };
 
 module.exports = expenseDao;
