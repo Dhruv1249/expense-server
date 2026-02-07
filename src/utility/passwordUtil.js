@@ -1,3 +1,5 @@
+// Redundant code still keeping it if sir needs it
+
 const generateTemporaryPassword = (desiredLength) => {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     let result = "";

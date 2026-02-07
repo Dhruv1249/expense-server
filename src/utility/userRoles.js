@@ -1,3 +1,5 @@
+// Redundant code still keeping it if sir needs it
+
 const VIEWER_ROLE = 'viewer';
 const ADMIN_ROLE = 'admin';
 const MANAGER_ROLE = 'manager';

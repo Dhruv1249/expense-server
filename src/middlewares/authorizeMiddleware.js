@@ -1,3 +1,5 @@
+// Redundant code still keeping it if sir needs it
+
 const permissions = require('../utility/permissions');
  const authorize = (requiredPermission) => {
    return (request, response, next) => {

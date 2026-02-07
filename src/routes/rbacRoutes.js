@@ -1,3 +1,5 @@
+// Redundant code still keeping it if sir needs it
+
 const express = require('express');
 const rbacController = require('../controllers/rbacController');
 const authMiddleware = require('../middlewares/authMiddleware');

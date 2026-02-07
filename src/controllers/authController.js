@@ -4,6 +4,20 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const { validationResult } = require("express-validator");
 const { ADMIN_ROLE } = require('../utility/userRoles');
+
+
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      _id: user._id,
+      email: user.email,
+      name: user.name
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" } // Increased login session to 7 days
+  );
+};
+
 const authController = {
   login: async (request, response) => {
     const errors = validationResult(request);
@@ -16,21 +30,16 @@ const authController = {
     const { email, password } = request.body;
 
     const user = await userDao.findByEmail(email);
-    user.role = user.role ? user.role : ADMIN_ROLE;
-    user.adminId = user.adminId ? user.adminId : user._id;
+    if (!user) {
+        return response.status(400).json({ message: "Invalid email or password" });
+    }
+    if (!user.password) {
+         return response.status(400).json({ message: "Please login with Google" });
+    }
+    
     const isPasswordMatched = await bcrypt.compare(password, user.password);
     if (user && isPasswordMatched) {
-      const token = jwt.sign(
-        {
-          name: user.name,
-          email: user.email,
-          _id: user._id,
-          role: user.role ? user.role : ADMIN_ROLE,
-          adminId: user.adminId ? user.adminId : user._id,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" },
-      );
+      const token = generateToken(user);
 
       response.cookie("jwtToken", token, {
         httpOnly: true,
@@ -66,9 +75,16 @@ const authController = {
         name: name,
         email: email,
         password: hashedPassword,
-        role: ADMIN_ROLE,
       })
       .then((u) => {
+        // Auto-login after register
+        const token = generateToken(u);
+        response.cookie("jwtToken", token, {
+          httpOnly: true,
+          secure: true,
+          domain: "localhost",
+          path: "/",
+        });
         return response.status(200).json({
           message: "User registered",
           user: { id: u._id },
@@ -112,7 +128,7 @@ const authController = {
     } catch (error) {
       console.log(error);
       return response.status(500).json({
-        message: "Internal server error",
+        message: "Invalid token",
       });
     }
   },
@@ -124,7 +140,7 @@ const authController = {
     } catch (error) {
       console.log(error);
       return response.status(500).json({
-        message: "Internal server error",
+        message: "Invalid token",
       });
     }
   },
@@ -151,22 +167,10 @@ const authController = {
           name: name,
           email: email,
           googleId: googleId,
-          role: ADMIN_ROLE,
         });
       }
 
-      const token = jwt.sign(
-        {
-          name: user.name,
-          email: user.email,
-          googleId: user.googleId,
-          _id: user._id,
-          role: user.role ? user.role : ADMIN_ROLE,
-          adminId: user.adminId ? user.adminId : user._id,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "1h" },
-      );
+      const token = generateToken(user);
 
       response.cookie("jwtToken", token, {
         httpOnly: true,
@@ -181,7 +185,7 @@ const authController = {
     } catch (error) {
       console.log(error);
       return response.status(500).json({
-        message: "Internal server error",
+        message: "Google Auth Failed",
       });
     }
   },

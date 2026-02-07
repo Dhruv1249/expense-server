@@ -2,8 +2,9 @@ const User = require('../model/users');
 
 const userDao = {
     findByEmail: async (email) => {
-        const user = await User.findOne({ email });
-        return user;
+        // We need to explicitly ask for the password because select: false is set in schema
+        // Took so much time to figure this out *sighs*
+        return await User.findOne({ email }).select('+password');
     },
 
     create: async (userData) => {

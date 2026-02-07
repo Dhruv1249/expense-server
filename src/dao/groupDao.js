@@ -1,52 +1,42 @@
 const Group = require("../model/group");
 
 const groupDao = {
-    createGroup: async (data) => {
-        const newGroup = new Group(data);
+    create: async (groupData) => {
+        const newGroup = new Group(groupData);
         return await newGroup.save();
     },
+    // We are using .populate() here since currently in groups only reference to users is stored
+    // and we want to fetch the details of the user and to get it we are using .populate()
+    getGroupsByUserId: async (userId) => {
+        return await Group.find({ "members.user": userId })
+            .populate('members.user', 'name email') 
+            .populate('creator', 'name');
+    },
 
-    updateGroup: async (data) => {
-        const { groupId, name, description, thumbnail, adminEmail, paymentStatus } = data;
+    getGroupById: async (groupId) => {
+        return await Group.findById(groupId)
+            .populate('members.user', 'name email');
+    },
+
+    addMember: async (groupId, userId, role = 'member') => {
+        const group = await Group.findById(groupId);
+        const isMember = group.members.some(m => m.user.toString() === userId.toString());
+        
+        if (isMember) return group;
 
         return await Group.findByIdAndUpdate(groupId, {
-            name, description, thumbnail, adminEmail, paymentStatus,
+            $push: { members: { user: userId, role } }
+        }, { new: true }).populate('members.user', 'name email');
+    },
+
+    removeMember: async (groupId, userId) => {
+        return await Group.findByIdAndUpdate(groupId, {
+            $pull: { members: { user: userId } }
         }, { new: true });
     },
 
-    addMembers: async (groupId, ...membersEmails) => {
-        return await Group.findByIdAndUpdate(groupId, {
-            $addToSet: { membersEmail: { $each: membersEmails }}
-        }, { new: true });
-    },
-
-    removeMembers: async (groupId, ...membersEmails) => {
-        return await Group.findByIdAndUpdate(groupId, {
-            $pull: { membersEmail: { $in: membersEmails } }
-        }, { new: true });
-    },
-
-    getGroupByEmail: async (email) => {
-        return await Group.find({ membersEmail: email });
-    },
-
-    getGroupByStatus: async (status) => {
-        // Take email as the input, then filter groups by email
-        // Check in membersEmail field.
-        return await Group.find({ "paymentStatus.isPaid": status });
-    },
-
-    /**
-     * We'll only return when was the last time group
-     * was settled to begin with.
-     * In future, we can move this to separate entity!
-     * @param {*} groupId 
-     */
-    getAuditLog: async (groupId) => {
-        // Based on your schema, the most relevant "settled" info 
-        // is the date within paymentStatus.
-        const group = await Group.findById(groupId).select('paymentStatus.date');
-        return group ? group.paymentStatus.date : null;
+    delete: async (groupId) => {
+        return await Group.findByIdAndDelete(groupId);
     }
 };
 
