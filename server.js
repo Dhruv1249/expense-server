@@ -14,7 +14,7 @@ mongoose.connect(process.env.MONGO_DB_CONNECTION_URI)
     .catch((error) => console.log('Error Connecting to Database: ', error));
 
 const corsOption = {
-    origin: process.env.CLIENT_URL,
+  origin: process.env.CLIENT_URL,
     credentials: true
 };
 
@@ -29,6 +29,7 @@ app.use('/groups', groupRoutes);
 //app.use('/rbac', rbacRoutes);
 app.use('/expenses', expenseRoutes);
 
-app.listen(5001, () => {
-    console.log('Server is running on port 5001');
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });

@@ -51,8 +51,8 @@ const authController = {
 
       response.cookie("jwtToken", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        domain: process.env.DOMAIN,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
       });
       return response.status(200).json({
@@ -107,7 +107,7 @@ const authController = {
         response.cookie("jwtToken", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          domain: process.env.DOMAIN,
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           path: "/",
         });
         return response.status(200).json({
@@ -227,7 +227,7 @@ const authController = {
         response.cookie("jwtToken", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          domain: process.env.DOMAIN,
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           path: "/",
         });
         return response.status(200).json({
@@ -287,7 +287,7 @@ const authController = {
         response.cookie("jwtToken", token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          domain: process.env.DOMAIN,
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
           path: "/",
         });
         return response.status(200).json({
@@ -316,8 +316,8 @@ const authController = {
 
       response.cookie("jwtToken", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        domain: process.env.DOMAIN,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
       });
       return response.status(200).json({
