@@ -9,12 +9,15 @@ const groupDao = {
   // and we want to fetch the details of the user and to get it we are using .populate()
   getGroupsByUserId: async (userId) => {
     return await Group.find({ "members.user": userId })
-      .populate("members.user", "name email")
-      .populate("creator", "name");
+      .populate("members.user", "name email username")
+      .populate("creator", "name username");
   },
 
   getGroupById: async (groupId) => {
-    return await Group.findById(groupId).populate("members.user", "name email");
+    return await Group.findById(groupId).populate(
+      "members.user",
+      "name email username",
+    );
   },
 
   addMember: async (groupId, userId, role = "member") => {
@@ -31,7 +34,7 @@ const groupDao = {
         $push: { members: { user: userId, role } },
       },
       { new: true },
-    ).populate("members.user", "name email");
+    ).populate("members.user", "name email username");
   },
 
   removeMember: async (groupId, userId) => {
@@ -53,7 +56,7 @@ const groupDao = {
       { _id: groupId, "members.user": userId },
       { $set: { "members.$.role": newRole } },
       { new: true },
-    ).populate("members.user", "name email");
+    ).populate("members.user", "name email username");
   },
 };
 
