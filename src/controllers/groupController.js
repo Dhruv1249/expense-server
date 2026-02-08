@@ -69,9 +69,11 @@ const groupController = {
       const requester = group.members.find(
         (m) => m.user._id.toString() === requesterId,
       );
-    const isAuthorized = requester && (requester.role === 'admin' || requester.role === 'manager');
+      const isAuthorized =
+        requester &&
+        (requester.role === "admin" || requester.role === "manager");
 
-    if (!isAuthorized) {
+      if (!isAuthorized) {
         return response
           .status(403)
           .json({ message: "Only group admins can add members" });
@@ -117,7 +119,9 @@ const groupController = {
       const requester = group.members.find(
         (m) => m.user._id.toString() === requesterId,
       );
-      const isAuthorized = requester && (requester.role === 'admin' || requester.role === 'manager');
+      const isAuthorized =
+        requester &&
+        (requester.role === "admin" || requester.role === "manager");
 
       if (!isAuthorized) {
         return response
@@ -166,7 +170,9 @@ const groupController = {
       // A) You are an Admin
       // B) You are removing YOURSELF (Leave Group)
       const isSelfRemoval = requesterId === userToRemove._id.toString();
-      const isAdmin = requester && (requester.role === 'admin' || requester.role === 'manager');
+      const isAdmin =
+        requester &&
+        (requester.role === "admin" || requester.role === "manager");
 
       if (!isSelfRemoval && !isAdmin) {
         return response
@@ -213,6 +219,65 @@ const groupController = {
       response.status(200).json({ message: "Group deleted successfully" });
     } catch (error) {
       response.status(500).json({ message: "Error deleting group" });
+    }
+  },
+
+  updateMemberRole: async (request, response) => {
+    try {
+      const { groupId, userId, newRole } = request.body;
+
+      if (!groupId || !userId || !newRole) {
+        return response
+          .status(400)
+          .json({ message: "Group ID, User ID, and new role are required" });
+      }
+
+      const validRoles = ["admin", "manager", "member", "viewer"];
+      if (!validRoles.includes(newRole)) {
+        return response
+          .status(400)
+          .json({
+            message: "Invalid role. Must be: admin, manager, member, or viewer",
+          });
+      }
+
+      const group = await groupDao.getGroupById(groupId);
+      if (!group) {
+        return response.status(404).json({ message: "Group not found" });
+      }
+
+      // Only admins can change roles
+      const requesterId = request.user._id.toString();
+      const requester = group.members.find(
+        (m) => m.user._id.toString() === requesterId,
+      );
+
+      if (!requester || requester.role !== "admin") {
+        return response
+          .status(403)
+          .json({ message: "Only admins can change member roles" });
+      }
+
+      // Cannot change own role
+      if (userId === requesterId) {
+        return response
+          .status(400)
+          .json({ message: "You cannot change your own role" });
+      }
+
+      const updatedGroup = await groupDao.updateMemberRole(
+        groupId,
+        userId,
+        newRole,
+      );
+
+      response.status(200).json({
+        message: "Role updated successfully",
+        group: updatedGroup,
+      });
+    } catch (error) {
+      console.error(error);
+      response.status(500).json({ message: "Error updating member role" });
     }
   },
 };
