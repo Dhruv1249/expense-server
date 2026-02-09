@@ -14,8 +14,24 @@ mongoose.connect(process.env.MONGO_DB_CONNECTION_URI)
     .catch((error) => console.log('Error Connecting to Database: ', error));
 
 const corsOption = {
-  origin: process.env.CLIENT_URL,
-    credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Electron, etc.)
+    // Also allow specific origins from environment variable
+    const allowedOrigins = process.env.CLIENT_URL
+      ? process.env.CLIENT_URL.split(",")
+      : [];
+
+    // Capacitor uses these origins
+    allowedOrigins.push("capacitor://localhost");
+    allowedOrigins.push("http://localhost");
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
 };
 
 const app = express();
