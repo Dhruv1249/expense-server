@@ -176,6 +176,17 @@ const expenseController = {
       res.status(500).json({ message: "Error settling expense" });
     }
   },
+
+  getStats: async (req, res) => {
+      try {
+          const userId = req.user._id;
+          const stats = await expenseDao.getStats(userId);
+          res.status(200).json(stats);
+      } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: "Error fetching stats" });
+      }
+  }
 };
 
 module.exports = expenseController;
