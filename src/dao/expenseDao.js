@@ -10,11 +10,18 @@ const expenseDao = {
       .populate("splits.user", "name email username");
   },
 
-  getExpensesByGroup: async (groupId) => {
-    return await Expense.find({ group: groupId })
-      .populate("payer", "name email username")
-      .populate("splits.user", "name email username")
-      .sort({ date: -1 });
+  getExpensesByGroup: async (groupId, page = 1, limit = 10) => {
+    const skip = (page - 1) * limit;
+    const [expenses, total] = await Promise.all([
+      Expense.find({ group: groupId })
+        .populate("payer", "name email username")
+        .populate("splits.user", "name email username")
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(limit),
+      Expense.countDocuments({ group: groupId }),
+    ]);
+    return { expenses, total };
   },
 
   delete: async (expenseId) => {

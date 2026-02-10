@@ -24,6 +24,7 @@ const corsOption = {
     // Capacitor uses these origins
     allowedOrigins.push("capacitor://localhost");
     allowedOrigins.push("http://localhost");
+    allowedOrigins.push("http://localhost:5174");
 
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);

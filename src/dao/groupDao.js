@@ -7,10 +7,19 @@ const groupDao = {
   },
   // We are using .populate() here since currently in groups only reference to users is stored
   // and we want to fetch the details of the user and to get it we are using .populate()
-  getGroupsByUserId: async (userId) => {
-    return await Group.find({ "members.user": userId })
-      .populate("members.user", "name email username")
-      .populate("creator", "name username");
+  getGroupsByUserId: async (userId, page = 1, limit = 9) => {
+    const skip = (page - 1) * limit;
+    const filter = { "members.user": userId };
+    const [groups, total] = await Promise.all([
+      Group.find(filter)
+        .populate("members.user", "name email username")
+        .populate("creator", "name username")
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Group.countDocuments(filter),
+    ]);
+    return { groups, total };
   },
 
   getGroupById: async (groupId) => {

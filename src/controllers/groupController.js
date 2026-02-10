@@ -29,8 +29,18 @@ const groupController = {
   getMyGroups: async (request, response) => {
     try {
       const userId = request.user._id;
-      const groups = await groupDao.getGroupsByUserId(userId);
-      response.status(200).json(groups);
+      const page = parseInt(request.query.page) || 1;
+      const limit = parseInt(request.query.limit) || 9;
+
+      const { groups, total } = await groupDao.getGroupsByUserId(userId, page, limit);
+      const totalPages = Math.ceil(total / limit);
+
+      response.status(200).json({
+        groups,
+        currentPage: page,
+        totalPages,
+        totalGroups: total,
+      });
     } catch (error) {
       response.status(500).json({ message: "Error fetching groups" });
     }

@@ -29,9 +29,9 @@ const expenseController = {
         return res
           .status(403)
           .json({
-            message:
-              "Viewers cannot add expenses. Please ask an Admin to upgrade you.",
-          });
+          message:
+            "Viewers cannot add expenses. Please ask an Admin to upgrade you.",
+        });
       }
 
       // Calculate Splits based on Type
@@ -86,8 +86,8 @@ const expenseController = {
           return res
             .status(400)
             .json({
-              message: "Split amounts must equal the total expense amount",
-            });
+            message: "Split amounts must equal the total expense amount",
+          });
         }
 
         finalSplits = splitData.map((item) => ({
@@ -118,8 +118,18 @@ const expenseController = {
   getGroupExpenses: async (req, res) => {
     try {
       const { groupId } = req.params;
-      const expenses = await expenseDao.getExpensesByGroup(groupId);
-      res.status(200).json(expenses);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+
+      const { expenses, total } = await expenseDao.getExpensesByGroup(groupId, page, limit);
+      const totalPages = Math.ceil(total / limit);
+
+      res.status(200).json({
+        expenses,
+        currentPage: page,
+        totalPages,
+        totalExpenses: total,
+      });
     } catch (error) {
       res.status(500).json({ message: "Error fetching expenses" });
     }
@@ -135,17 +145,17 @@ const expenseController = {
         return res.status(404).json({ message: "Expense not found" });
 
       // VERIFY PAYER (Only the Payer can mark it as settled)
-      if (expense.payer.toString() !== userId.toString()) {
+      if (expense.payer._id.toString() !== userId.toString()) {
         return res
           .status(403)
           .json({
-            message: "Only the person who paid this bill can settle it.",
-          });
+          message: "Only the person who paid this bill can settle it.",
+        });
       }
 
       // Update the specific split status
       const splitIndex = expense.splits.findIndex(
-        (s) => s.user.toString() === debtorId.toString(),
+        (s) => s.user._id.toString() === debtorId.toString(),
       );
 
       if (splitIndex === -1) {
