@@ -186,6 +186,43 @@ const expenseController = {
           console.error(error);
           res.status(500).json({ message: "Error fetching stats" });
       }
+  },
+
+  settleGroup: async (req, res) => {
+    try {
+      const { groupId } = req.body;
+      const userId = req.user._id;
+
+      const group = await groupDao.getGroupById(groupId);
+      if (!group) return res.status(404).json({ message: "Group not found" });
+
+      const member = group.members.find(
+        (m) => m.user._id.toString() === userId.toString()
+      );
+      if (!member || (member.role !== "admin" && member.role !== "manager")) {
+        return res.status(403).json({ message: "Only admins/managers can settle all expenses" });
+      }
+
+      const result = await expenseDao.settleAllByGroup(groupId);
+      res.status(200).json({
+        message: "All group expenses settled",
+        modifiedCount: result.modifiedCount,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error settling group expenses" });
+    }
+  },
+
+  getGroupStats: async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const stats = await expenseDao.getGroupStats(groupId);
+      res.status(200).json(stats);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error fetching group stats" });
+    }
   }
 };
 

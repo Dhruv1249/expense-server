@@ -10,4 +10,6 @@ router.post('/add', expenseController.addExpense);
 router.get('/group/:groupId', expenseController.getGroupExpenses);
 router.get('/stats', expenseController.getStats);
 router.post('/settle', expenseController.settleExpense);
+router.post('/settle-group', expenseController.settleGroup);
+router.get('/group-stats/:groupId', expenseController.getGroupStats);
 module.exports = router;

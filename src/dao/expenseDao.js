@@ -34,19 +34,45 @@ const expenseDao = {
       .populate("splits.user", "name email username");
   },
 
-  getStats: async (userId) => {
-    // 1. Total Spent by user (where payer is user)
-    // We only care about the amount they kept for themselves? No, total spent usually means how much they paid upfront. 
-    // Or maybe "Your Share" of expenses?
-    // Let's go with: 
-    // - Total You Paid: Sum of amount where payer = user
-    // - You Owe: Sum of splits where user = user AND status = PENDING AND payer != user
-    // - You Are Owed: Sum of splits where payer = user AND status = PENDING AND user != user
+  settleAllByGroup: async (groupId) => {
+    const result = await Expense.updateMany(
+      { group: groupId, "splits.status": "PENDING" },
+      { $set: { "splits.$[elem].status": "SETTLED" } },
+      { arrayFilters: [{ "elem.status": "PENDING" }] }
+    );
+    return result;
+  },
 
+  getGroupStats: async (groupId) => {
+    const expenses = await Expense.find({ group: groupId });
+    let totalSpent = 0;
+    let pendingCount = 0;
+    let settledCount = 0;
+    let pendingAmount = 0;
+
+    expenses.forEach((expense) => {
+      totalSpent += expense.amount;
+      const allSettled = expense.splits.every((s) => s.status === "SETTLED");
+      if (allSettled) {
+        settledCount++;
+      } else {
+        pendingCount++;
+        expense.splits.forEach((s) => {
+          if (s.status === "PENDING") {
+            pendingAmount += s.amount;
+          }
+        });
+      }
+    });
+
+    return { totalSpent, pendingCount, settledCount, pendingAmount };
+  },
+
+  getStats: async (userId) => {
+  
     const expensesPaid = await Expense.find({ payer: userId });
     const totalPaid = expensesPaid.reduce((acc, curr) => acc + curr.amount, 0);
 
-    // Calculate "You are Owed" (People haven't paid you back yet)
     let totalOwedToUser = 0;
     expensesPaid.forEach(expense => {
         expense.splits.forEach(split => {
@@ -56,8 +82,6 @@ const expenseDao = {
         });
     });
 
-    // Calculate "You Owe" (You haven't paid others back yet)
-    // Find expenses where you are in splits but NOT the payer
     const expensesInvolved = await Expense.find({
         "splits.user": userId,
         payer: { $ne: userId }

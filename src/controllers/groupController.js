@@ -1,5 +1,6 @@
 const groupDao = require("../dao/groupDao");
 const userDao = require("../dao/userDao");
+const expenseDao = require("../dao/expenseDao");
 
 const groupController = {
   create: async (request, response) => {
@@ -35,8 +36,18 @@ const groupController = {
       const { groups, total } = await groupDao.getGroupsByUserId(userId, page, limit);
       const totalPages = Math.ceil(total / limit);
 
+      // Compute actual totalSpent from expenses for each group
+      const groupsWithSpending = await Promise.all(
+        groups.map(async (group) => {
+          const stats = await expenseDao.getGroupStats(group._id);
+          const g = group.toObject ? group.toObject() : { ...group };
+          g.totalSpent = stats.totalSpent;
+          return g;
+        })
+      );
+
       response.status(200).json({
-        groups,
+        groups: groupsWithSpending,
         currentPage: page,
         totalPages,
         totalGroups: total,
