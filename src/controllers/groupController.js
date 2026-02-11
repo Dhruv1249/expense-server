@@ -187,9 +187,6 @@ const groupController = {
         (m) => m.user._id.toString() === requesterId,
       );
 
-      // Allow if:
-      // A) You are an Admin
-      // B) You are removing YOURSELF (Leave Group)
       const isSelfRemoval = requesterId === userToRemove._id.toString();
       const isAdmin =
         requester &&
@@ -235,6 +232,7 @@ const groupController = {
           .json({ message: "Only Admins can delete the group." });
       }
 
+      await expenseDao.deleteByGroup(groupId);
       await groupDao.delete(groupId);
 
       response.status(200).json({ message: "Group deleted successfully" });

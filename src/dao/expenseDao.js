@@ -28,6 +28,10 @@ const expenseDao = {
     return await Expense.findByIdAndDelete(expenseId);
   },
 
+  deleteByGroup: async (groupId) => {
+    return await Expense.deleteMany({ group: groupId });
+  },
+
   getById: async (id) => {
     return await Expense.findById(id)
       .populate("payer", "name email username")
@@ -69,36 +73,52 @@ const expenseDao = {
   },
 
   getStats: async (userId) => {
-  
-    const expensesPaid = await Expense.find({ payer: userId });
-    const totalPaid = expensesPaid.reduce((acc, curr) => acc + curr.amount, 0);
+    const uid = userId.toString();
 
+    // Expenses where user was the payer
+    const expensesPaid = await Expense.find({ payer: userId });
     let totalOwedToUser = 0;
+
     expensesPaid.forEach(expense => {
-        expense.splits.forEach(split => {
-            if (split.user.toString() !== userId.toString() && split.status === 'PENDING') {
-                totalOwedToUser += split.amount;
-            }
-        });
+      expense.splits.forEach(split => {
+        const splitUserId = (split.user._id || split.user).toString();
+        if (splitUserId !== uid && split.status === 'PENDING') {
+          totalOwedToUser += split.amount;
+        }
+      });
+    });
+    const allUserExpenses = await Expense.find({ "splits.user": userId });
+    let totalPaid = 0;
+    allUserExpenses.forEach(expense => {
+      const mySplit = expense.splits.find(s => {
+        const splitUserId = (s.user._id || s.user).toString();
+        return splitUserId === uid;
+      });
+      if (mySplit) {
+        totalPaid += mySplit.amount;
+      }
     });
 
     const expensesInvolved = await Expense.find({
-        "splits.user": userId,
-        payer: { $ne: userId }
+      "splits.user": userId,
+      payer: { $ne: userId }
     });
 
     let totalUserOwes = 0;
     expensesInvolved.forEach(expense => {
-        const mySplit = expense.splits.find(s => s.user.toString() === userId.toString());
-        if (mySplit && mySplit.status === 'PENDING') {
-            totalUserOwes += mySplit.amount;
-        }
+      const mySplit = expense.splits.find(s => {
+        const splitUserId = (s.user._id || s.user).toString();
+        return splitUserId === uid;
+      });
+      if (mySplit && mySplit.status === 'PENDING') {
+        totalUserOwes += mySplit.amount;
+      }
     });
 
     return {
-        totalPaid,
-        totalOwedToUser,
-        totalUserOwes
+      totalPaid,
+      totalOwedToUser,
+      totalUserOwes
     };
   }
 };
