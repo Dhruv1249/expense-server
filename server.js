@@ -8,6 +8,8 @@ const authRoutes = require('./src/routes/authRoutes');
 const groupRoutes = require('./src/routes/groupRoutes');
 //const rbacRoutes = require('./src/routes/rbacRoutes');
 const expenseRoutes = require('./src/routes/expenseRoutes');
+const paymentsRoutes = require('./src/routes/paymentRoutes');
+const profileRoutes = require('./src/routes/profileRoutes');
 
 mongoose.connect(process.env.MONGO_DB_CONNECTION_URI)
     .then(() => console.log('MongoDB Connected'))
@@ -37,10 +39,13 @@ const corsOption = {
 
 const app = express();
 
+
 app.use(cors(corsOption));
 app.use(express.json()); // Middleware
 app.use(cookieParser()); // Middleware
 
+app.use('/payments', paymentsRoutes);
+app.use('/profile', profileRoutes);
 app.use('/auth', authRoutes);
 app.use('/groups', groupRoutes);
 //app.use('/rbac', rbacRoutes);

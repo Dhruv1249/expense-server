@@ -8,6 +8,16 @@ const groupController = {
       const { name, description, thumbnail } = request.body;
       const creatorId = request.user._id;
 
+      const user = await userDao.findByEmail(request.user.email);
+      
+      const currentCredits = user.credits || 0;
+      
+      if (currentCredits < 1) {
+          return response.status(403).json({ 
+              message: "Insufficient credits. You need 1 credit to create a group." 
+          });
+      }
+
       // Creator is automatically the first Admin
       const newGroup = await groupDao.create({
         name,
@@ -16,6 +26,9 @@ const groupController = {
         creator: creatorId,
         members: [{ user: creatorId, role: "admin" }],
       });
+
+      user.credits = currentCredits - 1;
+      await user.save();
 
       response.status(201).json({
         message: "Group created successfully",
